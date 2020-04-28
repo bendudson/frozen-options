@@ -8,8 +8,8 @@ class Options(Mapping):
     """
     __isfrozen = False  # Allow changes during initialisation
     
-    def __init__(self,**kwargs):
-        self.__data = kwargs
+    def __init__(self, *args, **kwargs):
+        self.__data = dict(*args, **kwargs)
         self.__isfrozen = True  # Disable further updates
     
     def keys(self):
@@ -39,16 +39,27 @@ class Options(Mapping):
     def __iter__(self):
         return iter(self.__data)
     
-    def withAll(self, **kwargs):
+    def withAll(self, *args, **kwargs):
         """Return a copy, with different values and new keys """
         newdata = self.__data.copy()
+        # Arguments are collections e.g. dicts, other Options
+        for arg in args:
+            for key in arg:
+                newdata[key] = arg[key]
+        # Other keywords 
         for key in kwargs:
             newdata[key] = kwargs[key]
         return Options(**newdata)
 
-    def withValues(self, **kwargs):
+    def withValues(self, *args, **kwargs):
         """Return a copy, overriding given values. Don't add new keys"""
         newdata = self.__data.copy()
+        # Arguments are collections e.g. dicts, other Options
+        for arg in args:
+            for key in arg:
+                if key in newdata: # Ignore unknown keys
+                    newdata[key] = arg[key]
+        # Other keywords
         for key in kwargs:
             if key in newdata: # Ignore unknown keys
                 newdata[key] = kwargs[key]

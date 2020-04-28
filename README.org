@@ -1,10 +1,12 @@
 * Frozen Options
 
-An immutable dictionary-like structure, intended for configuration options.
-Similar to [[https://github.com/slezica/python-frozendict][frozendict]], with some differences:
+An immutable dictionary-like structure, intended for configuration
+options.  Similar to [[https://github.com/slezica/python-frozendict][frozendict]], and other similar projects. See [[https://www.python.org/dev/peps/pep-0416/][this
+rejected PEP]] for a partial list, or [[https://www.python.org/dev/peps/pep-0603/][this more recent PEP]].
+
+with some differences:
 - Additional constraints on modifications through =__setitem__=
 - Access to values using =__getitem__= like [[https://pypi.org/project/bunch/][Bunch]]
-- Different constructor and copy signatures, more convenient for configuration settings
 - Ability to selectively take values only for known keys
 - Ability to drop (remove) keys
 
@@ -21,11 +23,12 @@ print(option) # => {'value': 42, 'greeting': 'hello'}
 #+RESULTS:
 : {'value': 42, 'greeting': 'hello'}
 
-which can be combined with expanded dictionaries:
+which can be combined with dictionaries or other =dict= like mapping
+collections, including Options:
 #+BEGIN_SRC python :session options-example :results output
 mydict = {"pi":3.14, "alpha":0.007297}
 
-option = Options(**mydict, another="something")
+option = Options(mydict, another="something")
 
 print(option)  # => {'pi': 3.14, 'alpha': 0.007297, 'another': 'something'}
 #+END_SRC
@@ -77,7 +80,7 @@ or other mappable objects, this creates the union of these objects:
 #+BEGIN_SRC python :session options-example :results output
 mydict = {"pi":3.14, "alpha":0.007297}
 
-more_options = options.withAll(**mydict)
+more_options = options.withAll(mydict)
 print(more_options)  # => {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha': 0.007297}
 #+END_SRC
 
@@ -95,7 +98,7 @@ default = Options(greeting = "hello", value = 3)
 # User supplies some settings, including options not needed here
 user_settings = Options(value = 42, other_setting = "Goodbye")
 
-settings = default.withValues(**user_settings)
+settings = default.withValues(user_settings)
 print(settings) # => {'greeting': 'hello', 'value': 42}
 #+END_SRC
 
@@ -119,8 +122,8 @@ print(smaller)  # => {'pi': 3.14}
 
 or this could be done by filtering, or a dict comprehension:
 #+BEGIN_SRC  python :session options-example :results output
-another = Options(**{ key:value for (key,value) in options.items()
-                                if key != "pi"})
+another = Options({key:value for (key,value) in options.items()
+                             if key != "pi"})
 print(another)  # => {'value': 42, 'greeting': 'hello'}
 #+END_SRC
 

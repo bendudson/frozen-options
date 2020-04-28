@@ -56,12 +56,20 @@ def test_withAll_2():
         val = opt.an_other
     assert "an_other" in str(excinfo)
 
+def test_withAll_dict():
+    options = Options(value = 42, greeting = "hello")
+    more_options = options.withAll({"pi":3, "alpha":0.007297})
+
+    assert "value" in more_options
+    assert more_options.greeting == "hello"
+    assert "alpha" in more_options
+    assert more_options.pi == 3
+    
 def test_withValues_1():
     opt = Options(key=2, test=42)
     opt2 = opt.withValues(test=4)
     assert opt2.test == 4
     assert opt.test == 42
-
 
 def test_withValues_2():
     opt = Options(key=2, test=42)
@@ -98,3 +106,11 @@ def test_without_2():
     with pytest.raises(KeyError) as excinfo:
         val = opt2.key
     assert "key" in str(excinfo)
+
+def test_double_init():
+    # Cannot update object by calling __init__
+    a = Options(key=42)
+    with pytest.raises(TypeError) as excinfo:
+        a.__init__(b=4)
+    assert "assignment" in str(excinfo.value)
+
