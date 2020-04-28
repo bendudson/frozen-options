@@ -39,15 +39,15 @@ def test_del():
         del opt["key"]
     assert "deletion" in str(excinfo.value)  
 
-def test_withAll_1():
+def test_override_1():
     opt = Options(key=2, test=42)
-    opt2 = opt.withAll(test=4)
+    opt2 = Options(opt, test=4)
     assert opt2.test == 4
     assert opt.test == 42
 
-def test_withAll_2():
+def test_override_2():
     opt = Options(key=2, test=42)
-    opt2 = opt.withAll(test=4, an_other="hello")
+    opt2 = Options(opt, test=4, an_other="hello")
     
     assert opt2.an_other == "hello"
     assert opt2.test == 4
@@ -56,9 +56,9 @@ def test_withAll_2():
         val = opt.an_other
     assert "an_other" in str(excinfo)
 
-def test_withAll_dict():
+def test_override_dict():
     options = Options(value = 42, greeting = "hello")
-    more_options = options.withAll({"pi":3, "alpha":0.007297})
+    more_options = Options(options, {"pi":3, "alpha":0.007297})
 
     assert "value" in more_options
     assert more_options.greeting == "hello"

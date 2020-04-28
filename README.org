@@ -55,32 +55,39 @@ a =dict=. If needed, it can be converted back to a =dict=:
 #+BEGIN_SRC python :session options-example :results output
 mutable_data = dict(option)
 #+END_SRC
+This creates a copy, so the result =mutable_data= can be modified
+without affecting =option=.
 
 ** Transforming Options
 
-Options can be changed by creating a new =Options= object. Two use cases are covered:
-First a union, adding keys and replacing values using =withAll=, and just taking
-values for known keys using =withValues=.
+Options can be changed by creating a new =Options= object. Two use
+cases are supported: A new =Options= object can be created as a union
+of other =Options=, dicts and keywords; and values can be taken for
+known keys using =withValues=.
 
 *** Adding keys and replacing values
 
+=Options= can be initialised with a combination of =Options=, =dict= and other mappable
+objects, and keywords. The arguments are processed in order, with keywords last; earlier
+values are replaced if keys are repeated.
 #+BEGIN_SRC python :session options-example :results output
 options = Options(value = 42, greeting = "hello")
 
-more_options = options.withAll(value = 3, pi=3.14)
+more_options = Options(options, value = 3, pi=3.14)
 print(more_options) # => {'value': 3, 'greeting': 'hello', 'pi': 3.14}
 #+END_SRC
 
 #+RESULTS:
 : {'value': 3, 'greeting': 'hello', 'pi': 3.14}
 
-Note that the original =options= object is not changed. By expanding =dicts=, =Options=
-or other mappable objects, this creates the union of these objects:
+Note that the original =options= object is not changed. By combining
+=dicts=, =Options= or other mappable objects, =Options= initialisation
+creates the union of these objects:
 
 #+BEGIN_SRC python :session options-example :results output
 mydict = {"pi":3.14, "alpha":0.007297}
 
-more_options = options.withAll(mydict)
+more_options = Options(options, mydict)
 print(more_options)  # => {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha': 0.007297}
 #+END_SRC
 
