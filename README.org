@@ -1,0 +1,128 @@
+* Frozen Options
+
+An immutable dictionary-like structure, intended for configuration options.
+Similar to [[https://github.com/slezica/python-frozendict][frozendict]], with some differences:
+- Additional constraints on modifications through =__setitem__=
+- Access to values using =__getitem__= like [[https://pypi.org/project/bunch/][Bunch]]
+- Different constructor and copy signatures, more convenient for configuration settings
+- Ability to selectively take values only for known keys
+- Ability to drop (remove) keys
+
+** Creating Options
+
+Options can be created by setting key-values
+#+BEGIN_SRC python :session options-example :results output
+from frozen_options import Options
+
+option = Options(value = 42, greeting = "hello")
+print(option) # => {'value': 42, 'greeting': 'hello'}
+#+END_SRC
+
+#+RESULTS:
+: {'value': 42, 'greeting': 'hello'}
+
+which can be combined with expanded dictionaries:
+#+BEGIN_SRC python :session options-example :results output
+mydict = {"pi":3.14, "alpha":0.007297}
+
+option = Options(**mydict, another="something")
+
+print(option)  # => {'pi': 3.14, 'alpha': 0.007297, 'another': 'something'}
+#+END_SRC
+
+#+RESULTS:
+: {'pi': 3.14, 'alpha': 0.007297, 'another': 'something'}
+
+** Mutating options
+
+Don't! Once an =Options= object has been created, it can be passed around as a value,
+without fear that it will be modified. The following will all raise =TypeError= exceptions:
+#+BEGIN_SRC python :session options-example :results output
+option.changes = 8   # => TypeError
+option["something"] = None  # => TypeError
+del option["alpha"] # => TypeError
+#+END_SRC
+
+#+RESULTS:
+
+** Converting back to dictionary
+
+Options implements =collections.Mapping=, so can be used in many places which expect
+a =dict=. If needed, it can be converted back to a =dict=:
+#+BEGIN_SRC python :session options-example :results output
+mutable_data = dict(option)
+#+END_SRC
+
+** Transforming Options
+
+Options can be changed by creating a new =Options= object. Two use cases are covered:
+First a union, adding keys and replacing values using =withAll=, and just taking
+values for known keys using =withValues=.
+
+*** Adding keys and replacing values
+
+#+BEGIN_SRC python :session options-example :results output
+options = Options(value = 42, greeting = "hello")
+
+more_options = options.withAll(value = 3, pi=3.14)
+print(more_options) # => {'value': 3, 'greeting': 'hello', 'pi': 3.14}
+#+END_SRC
+
+#+RESULTS:
+: {'value': 3, 'greeting': 'hello', 'pi': 3.14}
+
+Note that the original =options= object is not changed. By expanding =dicts=, =Options=
+or other mappable objects, this creates the union of these objects:
+
+#+BEGIN_SRC python :session options-example :results output
+mydict = {"pi":3.14, "alpha":0.007297}
+
+more_options = options.withAll(**mydict)
+print(more_options)  # => {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha': 0.007297}
+#+END_SRC
+
+#+RESULTS:
+: {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha': 0.007297}
+
+*** Replacing values of known keys
+
+The other use-case is where there is a collection of default options, and a user-supplied
+collection of settings. Not all of the user settings may apply to a particular part of the
+code, so here we just want to take the keys we know about from the user settings.
+#+BEGIN_SRC python :session options-example :results output
+default = Options(greeting = "hello", value = 3)
+
+# User supplies some settings, including options not needed here
+user_settings = Options(value = 42, other_setting = "Goodbye")
+
+settings = default.withValues(**user_settings)
+print(settings) # => {'greeting': 'hello', 'value': 42}
+#+END_SRC
+
+#+RESULTS:
+: {'greeting': 'hello', 'value': 42}
+
+Note that =other_setting= was ignored because it was not in the default options.
+
+*** Removing keys
+
+A new Options can be created, without copying any keys in a given list:
+#+BEGIN_SRC python :session options-example :results output
+options = Options(value = 42, greeting = 'hello', pi=3.14)
+
+smaller = options.without('greeting', 'value')
+print(smaller)  # => {'pi': 3.14}
+#+END_SRC
+
+#+RESULTS:
+: {'pi': 3.14}
+
+or this could be done by filtering, or a dict comprehension:
+#+BEGIN_SRC  python :session options-example :results output
+another = Options(**{ key:value for (key,value) in options.items()
+                                if key != "pi"})
+print(another)  # => {'value': 42, 'greeting': 'hello'}
+#+END_SRC
+
+#+RESULTS:
+: {'value': 42, 'greeting': 'hello'}
