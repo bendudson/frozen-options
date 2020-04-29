@@ -67,13 +67,14 @@ known keys using =withValues=.
 
 *** Adding keys and replacing values
 
-=Options= can be initialised with a combination of =Options=, =dict= and other mappable
-objects, and keywords. The arguments are processed in order, with keywords last; earlier
-values are replaced if keys are repeated.
+=Options= can be initialised with a combination of =Options=, =dict=
+and other mappable objects, and keywords. The arguments are processed
+in order, merging nested mappable structures.  Keywords are processed
+last, and replace keys set earlier.
 #+BEGIN_SRC python :session options-example :results output
 options = Options(value = 42, greeting = "hello")
 
-more_options = Options(options, value = 3, pi=3.14)
+more_options = Options(options, value = 3, pi = 3.14)
 print(more_options) # => {'value': 3, 'greeting': 'hello', 'pi': 3.14}
 #+END_SRC
 
@@ -94,6 +95,24 @@ print(more_options)  # => {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha'
 #+RESULTS:
 : {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha': 0.007297}
 
+*** Nested immutable Options
+
+Because Options construction merges nested mappable structures, keys in nested
+structures can be transformed, to an arbitrary depth:
+#+BEGIN_SRC python :session options-example :results output
+options = Options(value = 42, 
+                  nested = Options(greeting = "hello",
+                                   pi = 3.14))
+
+# Transform nested structure
+new_options = Options(options, {"nested":{"pi":3, 'alpha': 0.007297}})
+
+print(new_options)
+#+END_SRC
+
+#+RESULTS:
+: {'value': 42, 'nested': Options(greeting='hello', pi=3, alpha=0.007297)}
+
 *** Replacing values of known keys
 
 The other use-case is where there is a collection of default options, and a user-supplied
@@ -113,6 +132,8 @@ print(settings) # => {'greeting': 'hello', 'value': 42}
 : {'greeting': 'hello', 'value': 42}
 
 Note that =other_setting= was ignored because it was not in the default options.
+
+This also works on arbitrarily nested =Options= objects.
 
 *** Removing keys
 

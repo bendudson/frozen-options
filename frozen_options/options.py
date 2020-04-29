@@ -5,14 +5,57 @@ except:
 
 class Options(Mapping):
     """Immutable dictionary-like structure for configuration options
-    """
-    __isfrozen = False  # Allow changes during initialisation
     
+    Examples
+    --------
+
+    Create like a dict, including nested Options:
+
+    data = Options(setting = value, 
+                   section = Options(subsetting = value2))
+    
+    Access data with ["key"] or .key syntax:
+
+    data["setting"] # => value
+    data.section.subsetting  # => value2
+
+    Transform nested data structures without mutating the original.
+    This is done by merging nested dicts or Options 
+    (any collection.abs.Mapping objects).
+
+    data2 = Options(data, {"section":{"subsetting": newvalue}})
+    
+    data2 is now the same as data, but 
+    data.section.subsetting  # => newvalue
+
+    These are shallow copies, so in a nested tree of Options only the parts
+    which change are copied.
+    """
+    
+    __isfrozen = False  # Allow changes during initialisation
+
     def __init__(self, *args, **kwargs):
+        """
+        Inputs
+        ------
+        
+        arguments    Mapping objects e.g dictionaries or Objects
+                     These are recursively merged together, so that
+                     nested dictionaries or Options are combined.
+                     This transforms nested immutable structures.
+        
+        keywords     Replace or set keys. These replace rather than merge.
+        """
         self.__data = {}
         for arg in args:
-            for key in arg:
-                self.__data[key] = arg[key]
+            for key, value in arg.items():
+                if (key in self.__data and
+                    isinstance(self.__data[key], Mapping) and
+                    isinstance(value, Mapping)):
+                    # Recursively merge Options with any Mapping e.g. dict, other Options
+                    self.__data[key] = Options(self.__data[key], value)
+                else:
+                    self.__data[key] = value
         # Other keywords 
         for key in kwargs:
             self.__data[key] = kwargs[key]
@@ -46,31 +89,38 @@ class Options(Mapping):
         return iter(self.__data)
 
     def withValues(self, *args, **kwargs):
-        """Return a copy, overriding given values. Don't add new keys"""
+        """Return a copy, recursively overriding given values. Don't add new keys.
+        If this Option contains nested Options, then those values are also extracted.      
+        """
         newdata = self.__data.copy()
+
+        def getExistingKeys(values):
+            for key, value in values.items():
+                if key in newdata: # Ignore unknown keys
+                    if (isinstance(newdata[key], Options) and
+                        isinstance(value, Mapping)):
+                        newdata[key] = newdata[key].withValues(value)
+                    else:
+                        newdata[key] = value
+
         # Arguments are collections e.g. dicts, other Options
         for arg in args:
-            for key in arg:
-                if key in newdata: # Ignore unknown keys
-                    newdata[key] = arg[key]
+            getExistingKeys(arg)
         # Other keywords
-        for key in kwargs:
-            if key in newdata: # Ignore unknown keys
-                newdata[key] = kwargs[key]
-        return Options(**newdata)
-    
+        getExistingKeys(kwargs)
+        return Options(newdata)
+
     def without(self, *omit_keys):
         """Return a copy without the given keys"""
         newdata = {}
         for key, value in self.__data.items():
             if key not in omit_keys:
                 newdata[key] = value
-        return Options(**newdata)
-    
+        return Options(newdata)
+
     def __str__(self):
         return self.__data.__str__()
     
     def __repr__(self):
         return "Options(" + ", ".join([str(key) + "=" + repr(value)
                                        for key, value in self.__data.items()]) + ")"
-
