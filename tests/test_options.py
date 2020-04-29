@@ -85,6 +85,26 @@ def test_withValues_2():
         val = opt.an_other
     assert "an_other" in str(excinfo)
 
+def test_withValues_nested():
+    default = Options(setting1 = 1,
+                      subsection1 = Options(setting2 = 2,
+                                            setting3 = 3),
+                      subsection2 = Options(setting4 = 4))
+
+    settings = default.withValues({"setting1":11,
+                                   "subsection1":{"setting3":33}})
+
+    # Changed values
+    assert settings.setting1 == 11
+    assert settings.subsection1.setting3 == 33
+    # Original values unchanged
+    assert default.setting1 == 1
+    assert default.subsection1.setting3 == 3
+    # Subsection merged, not replaced
+    assert default.subsection1.setting2 == 2
+    # Other subsections not copied
+    assert settings.subsection2 is default.subsection2
+
 def test_without():
     opt = Options(key=2, test=42)
     opt2 = opt.without("test")
@@ -114,3 +134,12 @@ def test_double_init():
         a.__init__(b=4)
     assert "assignment" in str(excinfo.value)
 
+def test_merge():
+    options = Options(value = 42, 
+                      nested = Options(greeting = "hello",
+                                       val = 3))
+    new_options = Options(options, {"nested":{"val":5, 'alpha': 0.007297}})
+
+    assert options.nested.val == 3
+    assert new_options.nested.val == 5
+    assert "alpha" in new_options.nested

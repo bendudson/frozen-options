@@ -7,8 +7,9 @@ rejected PEP]] for a partial list, or [[https://www.python.org/dev/peps/pep-0603
 with some differences:
 - Additional constraints on modifications through =__setitem__=
 - Access to values using =__getitem__= like [[https://pypi.org/project/bunch/][Bunch]]
-- Ability to selectively take values only for known keys
-- Ability to drop (remove) keys
+- Selectively extract values only for known keys
+- Drop (remove) keys
+- Handles changes to nested data in an immutable way
 
 ** Creating Options
 
@@ -24,7 +25,7 @@ print(option) # => {'value': 42, 'greeting': 'hello'}
 : {'value': 42, 'greeting': 'hello'}
 
 which can be combined with dictionaries or other =dict= like mapping
-collections, including Options:
+collections, including other =Options=:
 #+BEGIN_SRC python :session options-example :results output
 mydict = {"pi":3.14, "alpha":0.007297}
 
@@ -48,6 +49,9 @@ del option["alpha"] # => TypeError
 
 #+RESULTS:
 
+Note: Because this is python, there is always a way to modify the data
+if you really want to.
+
 ** Converting back to dictionary
 
 Options implements =collections.Mapping=, so can be used in many places which expect
@@ -68,9 +72,10 @@ known keys using =withValues=.
 *** Adding keys and replacing values
 
 =Options= can be initialised with a combination of =Options=, =dict=
-and other mappable objects, and keywords. The arguments are processed
-in order, merging nested mappable structures.  Keywords are processed
-last, and replace keys set earlier.
+and other mappable objects, and keywords. First the arguments are
+processed in order, merging nested mappable structures (trees of
+Options or dicts). This can be used to transform values in nested
+=Options=. Keywords are processed last, and replace keys set earlier.
 #+BEGIN_SRC python :session options-example :results output
 options = Options(value = 42, greeting = "hello")
 
@@ -107,11 +112,24 @@ options = Options(value = 42,
 # Transform nested structure
 new_options = Options(options, {"nested":{"pi":3, 'alpha': 0.007297}})
 
-print(new_options)
+print(new_options) # => {'value': 42, 'nested': Options(greeting='hello', pi=3, alpha=0.007297)}
 #+END_SRC
 
 #+RESULTS:
 : {'value': 42, 'nested': Options(greeting='hello', pi=3, alpha=0.007297)}
+
+Note that here the nested =Options= has been transformed, modifying
+the ="pi"= value, and adding the ="alpha"= key.  If instead we wanted
+to replace the nested options, rather than merging them, we could use
+the keyword
+#+BEGIN_SRC python :session options-example :results output
+new_options = Options(options, nested=Options(pi=3, alpha=0.007297))
+
+print(new_options) # => {'value': 42, 'nested': Options(pi=3, alpha=0.007297)}
+#+END_SRC
+
+#+RESULTS:
+: {'value': 42, 'nested': Options(pi=3, alpha=0.007297)}
 
 *** Replacing values of known keys
 
