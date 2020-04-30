@@ -72,8 +72,8 @@ known keys using =withValues=.
 *** Adding keys and replacing values
 
 =Options= can be initialised with a combination of =Options=, =dict=
-and other mappable objects, and keywords. First the arguments are
-processed in order, merging nested mappable structures (trees of
+and other mapping objects, and keywords. First the arguments are
+processed in order, merging nested mapping structures (trees of
 Options or dicts). This can be used to transform values in nested
 =Options=. Keywords are processed last, and replace keys set earlier.
 #+BEGIN_SRC python :session options-example :results output
@@ -87,7 +87,7 @@ print(more_options) # => {'value': 3, 'greeting': 'hello', 'pi': 3.14}
 : {'value': 3, 'greeting': 'hello', 'pi': 3.14}
 
 Note that the original =options= object is not changed. By combining
-=dicts=, =Options= or other mappable objects, =Options= initialisation
+=dicts=, =Options= or other mapping objects, =Options= initialisation
 creates the union of these objects:
 
 #+BEGIN_SRC python :session options-example :results output
@@ -102,7 +102,7 @@ print(more_options)  # => {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha'
 
 *** Nested immutable Options
 
-Because Options construction merges nested mappable structures, keys in nested
+Because Options construction merges nested mapping structures, keys in nested
 structures can be transformed, to an arbitrary depth:
 #+BEGIN_SRC python :session options-example :results output
 options = Options(value = 42, 
@@ -119,7 +119,7 @@ print(new_options) # => {'value': 42, 'nested': Options(greeting='hello', pi=3, 
 : {'value': 42, 'nested': Options(greeting='hello', pi=3, alpha=0.007297)}
 
 Note that here the nested =Options= has been transformed, modifying
-the ="pi"= value, and adding the ="alpha"= key.  If instead we wanted
+the =pi= value, and adding the =alpha= key.  If instead we wanted
 to replace the nested options, rather than merging them, we could use
 the keyword
 #+BEGIN_SRC python :session options-example :results output
