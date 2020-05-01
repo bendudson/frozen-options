@@ -120,7 +120,7 @@ without affecting =option=.
 Options can be changed by creating a new =Options= object. Two use
 cases are supported: A new =Options= object can be created as a union
 of other =Options=, dicts and keywords; and values can be taken for
-known keys using =withValues=.
+known keys using =takeValues=.
 
 *** Adding keys and replacing values
 
@@ -195,7 +195,7 @@ default = Options(greeting = "hello", value = 3)
 # User supplies some settings, including options not needed here
 user_settings = Options(value = 42, other_setting = "Goodbye")
 
-settings = default.withValues(user_settings)
+settings = default.takeValues(user_settings)
 print(settings) # => {'greeting': 'hello', 'value': 42}
 #+END_SRC
 
