@@ -65,15 +65,15 @@ def test_override_dict():
     assert "alpha" in more_options
     assert more_options.pi == 3
     
-def test_withValues_1():
+def test_takeValues_1():
     opt = Options(key=2, test=42)
-    opt2 = opt.withValues(test=4)
+    opt2 = opt.takeValues(test=4)
     assert opt2.test == 4
     assert opt.test == 42
 
-def test_withValues_2():
+def test_takeValues_2():
     opt = Options(key=2, test=42)
-    opt2 = opt.withValues(test=4, an_other="hello")
+    opt2 = opt.takeValues(test=4, an_other="hello")
     
     assert opt2.test == 4
     with pytest.raises(KeyError) as excinfo:
@@ -85,13 +85,13 @@ def test_withValues_2():
         val = opt.an_other
     assert "an_other" in str(excinfo)
 
-def test_withValues_nested():
+def test_takeValues_nested():
     default = Options(setting1 = 1,
                       subsection1 = Options(setting2 = 2,
                                             setting3 = 3),
                       subsection2 = Options(setting4 = 4))
 
-    settings = default.withValues({"setting1":11,
+    settings = default.takeValues({"setting1":11,
                                    "subsection1":{"setting3":33}})
 
     # Changed values
@@ -105,18 +105,18 @@ def test_withValues_nested():
     # Other subsections not copied
     assert settings.subsection2 is default.subsection2
 
-def test_without():
+def test_drop():
     opt = Options(key=2, test=42)
-    opt2 = opt.without("test")
+    opt2 = opt.drop("test")
     
     assert opt.test == 42
     with pytest.raises(KeyError) as excinfo:
         val = opt2.test
     assert "test" in str(excinfo)
 
-def test_without_2():
+def test_drop_2():
     opt = Options(key=2, test=42)
-    opt2 = opt.without("test", "key")
+    opt2 = opt.drop("test", "key")
     
     assert opt.test == 42
     assert opt.key == 2

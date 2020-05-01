@@ -11,6 +11,59 @@ with some differences:
 - Drop (remove) keys
 - Handles changes to nested data in an immutable way
 
+** Intended use
+
+The use case is where there are many components which have configuration
+options, and settings need to be passed from e.g. the user down through
+several layers to the components. 
+ - Default settings are defined by the individual components which depend on them
+ - Higher level components collect default values from sub-components
+ - The user settings are filtered and passed down to the sub-components
+ - Using immutable structures minimises unexpected side-effects when settings are
+   shared between components.
+
+In this example class =C= depends on classes =A= and =B=
+#+BEGIN_SRC python :session example :results output
+from frozen_options import Options
+
+class A:
+  defaults = Options(setting = 3)
+  def __init__(self, user_settings):
+    self.settings = self.defaults.takeValues(user_settings)
+
+class B:
+  defaults = Options(greeting = "hello")
+  def __init__(self, user_settings):
+    self.settings = self.defaults.takeValues(user_settings)
+
+class C:
+  defaults = Options(A.defaults, B.defaults,  # Collect defaults from sub-components
+                     answer = 42)
+  def __init__(self, user_settings, **kwargs):
+    self.settings = self.defaults.takeValues(user_settings, kwargs)
+    
+  def doSomething(self):
+    a = A(self.settings) # Pass settings down
+#+END_SRC
+
+=Options= also handles nested structures, so if name clashes need to be avoided
+then class =C= could be defined as:
+#+BEGIN_SRC python :session example :results output
+class C:
+  defaults = Options(A = A.defaults,  # Nested Options
+                     B = B.defaults,
+                     answer = 42)
+  def __init__(self, *args, **kwargs):
+    self.settings = self.defaults.takeValues(*args, kwargs)  # Merges nested Options
+    
+  def doSomething(self):
+    a = A(self.settings.A)
+
+c = C(A = {'setting':4}) # c.settings => Options(A=Options(setting=4), 
+                         #                       B=Options(greeting='hello'),
+                         #                       answer=42)
+#+END_SRC
+
 ** Creating Options
 
 Options can be created by setting key-values
@@ -91,7 +144,7 @@ Note that the original =options= object is not changed. By combining
 creates the union of these objects:
 
 #+BEGIN_SRC python :session options-example :results output
-mydict = {"pi":3.14, "alpha":0.007297}
+mydict = {'pi':3.14, 'alpha':0.007297}
 
 more_options = Options(options, mydict)
 print(more_options)  # => {'value': 42, 'greeting': 'hello', 'pi': 3.14, 'alpha': 0.007297}
@@ -110,7 +163,7 @@ options = Options(value = 42,
                                    pi = 3.14))
 
 # Transform nested structure
-new_options = Options(options, {"nested":{"pi":3, 'alpha': 0.007297}})
+new_options = Options(options, {'nested':{'pi':3, 'alpha': 0.007297}})
 
 print(new_options) # => {'value': 42, 'nested': Options(greeting='hello', pi=3, alpha=0.007297)}
 #+END_SRC
@@ -159,7 +212,7 @@ A new Options can be created, without copying any keys in a given list:
 #+BEGIN_SRC python :session options-example :results output
 options = Options(value = 42, greeting = 'hello', pi=3.14)
 
-smaller = options.without('greeting', 'value')
+smaller = options.drop('greeting', 'value')
 print(smaller)  # => {'pi': 3.14}
 #+END_SRC
 

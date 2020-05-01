@@ -88,8 +88,8 @@ class Options(Mapping):
     def __iter__(self):
         return iter(self.__data)
 
-    def withValues(self, *args, **kwargs):
-        """Return a copy, recursively overriding given values. Don't add new keys.
+    def takeValues(self, *args, **kwargs):
+        """Return a copy, recursively overriding values if provided. Doesn't add new keys.
         If this Option contains nested Options, then those values are also extracted.      
         """
         newdata = self.__data.copy()
@@ -99,7 +99,7 @@ class Options(Mapping):
                 if key in newdata: # Ignore unknown keys
                     if (isinstance(newdata[key], Options) and
                         isinstance(value, Mapping)):
-                        newdata[key] = newdata[key].withValues(value)
+                        newdata[key] = newdata[key].takeValues(value)
                     else:
                         newdata[key] = value
 
@@ -110,8 +110,15 @@ class Options(Mapping):
         getExistingKeys(kwargs)
         return Options(newdata)
 
-    def without(self, *omit_keys):
-        """Return a copy without the given keys"""
+    def drop(self, *omit_keys):
+        """Return a copy while dropping the given keys
+        
+        Example:
+        
+        opt = Options(something = 42, value = 3, other = 5)
+        
+        opt2 = opt.drop("value", "other") # => Options(something = 42)
+        """
         newdata = {}
         for key, value in self.__data.items():
             if key not in omit_keys:
